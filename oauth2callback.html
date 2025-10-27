@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth Callback</title>
+    <script>
+        function init() {
+            if (window.location.hash) {
+                // Send the hash back to the parent window
+                window.opener.postMessage({
+                    type: 'oauth_callback',
+                    hash: window.location.hash
+                }, window.location.origin);
+                window.close();
+            }
+        }
+    </script>
+</head>
+<body onload="init()">
+    <p>Authenticating with Google...</p>
+</body>
+</html>
