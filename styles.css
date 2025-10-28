@@ -6,7 +6,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -26,6 +26,7 @@ body {
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
   overflow: hidden;
   animation: slideIn 0.5s ease-out;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 @keyframes slideIn {
@@ -45,6 +46,41 @@ body {
   padding: 30px;
   text-align: center;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+}
+
+.home-button {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.home-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.home-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.home-button svg {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 h1 {
@@ -181,20 +217,42 @@ input[type="text"]::placeholder {
   color: white;
   padding: 15px 30px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(76, 175, 80, 0.2);
 }
 
 .btn:disabled {
@@ -419,37 +477,21 @@ input[type="text"]::placeholder {
 }
 
 .content-preview-card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
   margin: 20px 0;
-  box-shadow:
-    0 8px 32px rgba(0,0,0,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   position: relative;
+  cursor: pointer;
 }
 
-.content-preview-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-}
 
 .content-preview-card:hover {
-  box-shadow:
-    0 12px 40px rgba(0,0,0,0.15),
-    inset 0 1px 0 rgba(255,255,255,0.4),
-    0 0 0 1px rgba(255,255,255,0.1);
-  transform: translateY(-4px) scale(1.02);
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
 .content-preview-header {
@@ -457,23 +499,22 @@ input[type="text"]::placeholder {
   justify-content: space-between;
   align-items: center;
   padding: 20px 25px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #f8f9fa;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .content-preview-header:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+  background: #f0f1f2;
 }
 
 .content-preview-header h4 {
   margin: 0;
-  color: #2196F3;
+  color: #2e7d32;
   font-size: 18px;
   flex: 1;
+  font-weight: 600;
 }
 
 .expand-icon {
@@ -487,13 +528,16 @@ input[type="text"]::placeholder {
   padding: 0 25px 25px 25px;
 }
 
+.content-preview-body .content-text {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .content-text {
   margin: 15px 0;
   line-height: 1.6;
-  color: rgba(0,0,0,0.8);
+  color: rgba(0,0,0,0.85);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
 }
 
 .content-text.collapsed {
@@ -509,9 +553,7 @@ input[type="text"]::placeholder {
   left: 0;
   right: 0;
   height: 20px;
-  background: linear-gradient(transparent, rgba(255,255,255,0.8));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: linear-gradient(transparent, rgba(255,255,255,1));
   pointer-events: none;
 }
 
@@ -522,15 +564,14 @@ input[type="text"]::placeholder {
 .content-meta {
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 
 .content-meta p {
   margin: 8px 0;
   line-height: 1.6;
-  color: rgba(0,0,0,0.7);
+  color: rgba(0,0,0,0.75);
+  font-size: 14px;
 }
 
 .content-meta p small {
@@ -706,10 +747,30 @@ input[type="text"]::placeholder {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(255,255,255,0.5);
+  background: #f8f9fa;
   border-radius: 10px;
   padding: 15px;
   min-height: 200px;
+  position: relative;
+}
+
+.image-loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.image-loading-spinner .spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #4CAF50;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
 }
 
 .post-image-preview {

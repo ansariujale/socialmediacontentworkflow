@@ -32,6 +32,23 @@ let pendingPosts = [];
 let selectedPost = null;
 let configurationSubmitted = false;
 
+// Home button functionality
+const homeButton = document.getElementById('homeButton');
+if (homeButton) {
+  homeButton.addEventListener('click', function() {
+    showStep(1);
+    // Clear any messages
+    clearMessage('initialMessage');
+    clearMessage('step2Message');
+    clearMessage('step3Message');
+    // Reset form if needed
+    document.getElementById('userInput').value = '';
+    selectedPlatforms = [];
+    selectedPost = null;
+    configurationSubmitted = false;
+  });
+}
+
 
 // Utility functions
 function showStep(stepNum) {
@@ -549,6 +566,17 @@ function displayPendingPostsSection(statuses, posts) {
       }
     });
   }
+
+  // Add back to input button event listener
+  const backToInputBtn = document.getElementById('backToInput');
+  if (backToInputBtn) {
+    backToInputBtn.addEventListener('click', function() {
+      showStep(1);
+      pendingPostsSection.style.display = 'none';
+      initialForm.style.display = 'block';
+      clearMessage('initialMessage');
+    });
+  }
 }
 
 // Display pending posts list
@@ -651,7 +679,7 @@ reviewSubmit.addEventListener('click', async function() {
 // Generate content preview
 function generatePreview() {
   const includeImage = document.getElementById('includeImage').checked;
-  let previewHTML = '<h3>🚀 Ready to Post - Final Preview</h3><p>Review your content for each selected platform:</p>';
+  let previewHTML = '';
 
   selectedPlatforms.forEach((platform, index) => {
     const platformContent = generatePlatformContent(platform, contentData);
@@ -660,8 +688,8 @@ function generatePreview() {
     const isExpanded = false; // Default collapsed state
 
     previewHTML += `
-      <div class="content-preview-card" data-platform="${platform}" data-expanded="${isExpanded}">
-        <div class="content-preview-header" onclick="toggleContentPreview(${index})">
+      <div class="content-preview-card" data-platform="${platform}" data-expanded="${isExpanded}" onclick="toggleContentPreview(${index})">
+        <div class="content-preview-header">
           <h4>${getPlatformIcon(platform)} ${platform.charAt(0).toUpperCase() + platform.slice(1)}</h4>
           <span class="expand-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -690,11 +718,11 @@ function generatePreview() {
 // Generate skeleton loading preview for content generation
 function generateSkeletonPreview() {
   const includeImage = document.getElementById('includeImage').checked;
-  let previewHTML = '<h3>🚀 Ready to Post - Final Preview</h3><p>Review your content for each selected platform:</p>';
+  let previewHTML = '<h3>⏳ Generating Content...</h3><p>Please wait while we create platform-specific content:</p>';
 
   selectedPlatforms.forEach((platform, index) => {
     previewHTML += `
-      <div class="content-preview-card" data-platform="${platform}" data-expanded="false">
+      <div class="content-preview-card" data-platform="${platform}" data-expanded="false" onclick="toggleContentPreview(${index})">
         <div class="content-preview-header">
           <h4>${getPlatformIcon(platform)} ${platform.charAt(0).toUpperCase() + platform.slice(1)}</h4>
           <span class="expand-icon">⏳</span>
@@ -744,18 +772,24 @@ function getPlatformIcon(platform) {
   </svg>`;
 }
 
-// Convert Google Drive sharing link to direct view link
-function convertGoogleDriveLink(url) {
+// Convert URLs to ensure they have proper protocol for image display
+function convertImageLink(url) {
   if (!url || typeof url !== 'string') return url;
 
-  // Check if it's a Google Drive sharing link
-  const driveMatch = url.match(/https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view/);
-  if (driveMatch) {
-    const fileId = driveMatch[1];
-    // Use the direct download link which works for publicly shared files
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+  // If it's already an absolute URL starting with https://, return as-is
+  if (url.startsWith('https://')) {
+    return url;
   }
 
+  // For relative URLs or other formats, ensure they start with https://
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    // If it looks like a URL without protocol, add https://
+    if (url.includes('dropbox.com') || url.includes('.')) {
+      return `https://${url}`;
+    }
+  }
+
+  // For all other URLs, return as-is
   return url;
 }
 
@@ -827,12 +861,7 @@ seePendingPosts.addEventListener('click', async function() {
   }
 });
 
-// Handle back to input button
-backToInput.addEventListener('click', function() {
-  pendingPostsSection.style.display = 'none';
-  initialForm.style.display = 'block';
-  clearMessage('initialMessage');
-});
+// Handle back to input button - moved to displayPendingPostsSection function
 
 // Handle selecting a pending post
 function selectPendingPost(post) {
@@ -855,6 +884,29 @@ function selectPendingPost(post) {
   } else {
     // Normal flow for posts that need configuration
     resetConfigurationState();
+
+    // Check if this post has pre-selected social channels
+    const socialChannelValue = post.socialChannel || post.socialChannels || post.SocialChannel || '';
+    const socialChannels = socialChannelValue ? socialChannelValue.split(',').map(s => s.trim().toLowerCase()) : [];
+
+    if (socialChannels.length > 0) {
+      // Update UI checkboxes to reflect pre-selected platforms
+      document.querySelectorAll('#socialOptions input[type="checkbox"]').forEach(cb => {
+        const platform = cb.value;
+        const isSelected = socialChannels.includes(platform.toLowerCase());
+        cb.checked = isSelected;
+        const option = cb.closest('.social-option');
+        if (isSelected) {
+          option.classList.add('selected');
+          selectedPlatforms.push(platform);
+        } else {
+          option.classList.remove('selected');
+        }
+      });
+
+      console.log('Pre-selected platforms for regular post:', socialChannels);
+    }
+
     showStep(2);
     displayResults(contentData);
   }
@@ -867,6 +919,9 @@ function loadPreConfiguredPost(post) {
   const socialChannelValue = post.socialChannel || post.socialChannels || post.SocialChannel || '';
   const socialChannels = socialChannelValue ? socialChannelValue.split(',').map(s => s.trim().toLowerCase()) : [];
   selectedPlatforms = socialChannels;
+
+  console.log('Social channel value from sheet:', socialChannelValue);
+  console.log('Parsed social channels:', socialChannels);
 
   // Set image checkbox state from needsimage column
   const includeImage = post.needsimage && post.needsimage.trim().toLowerCase() === 'yes';
@@ -891,6 +946,19 @@ function loadPreConfiguredPost(post) {
     // Store image data - try different possible column names
     postImage: post.postImage || '',
   };
+
+  // Update UI checkboxes to reflect pre-selected platforms
+  document.querySelectorAll('#socialOptions input[type="checkbox"]').forEach(cb => {
+    const platform = cb.value;
+    const isSelected = selectedPlatforms.includes(platform.toLowerCase());
+    cb.checked = isSelected;
+    const option = cb.closest('.social-option');
+    if (isSelected) {
+      option.classList.add('selected');
+    } else {
+      option.classList.remove('selected');
+    }
+  });
 
   // Mark as configured and go directly to Step 3
   configurationSubmitted = true;
@@ -920,7 +988,7 @@ function loadPreConfiguredPost(post) {
 // Generate preview for pre-configured posts
 function generatePreConfiguredPreview() {
   const includeImage = document.getElementById('includeImage')?.checked || false;
-  let previewHTML = '<h3>🚀 Ready to Post - Pre-Configured Content</h3><p>Review your pre-approved content for each selected platform:</p>';
+  let previewHTML = '<h3>✅ Ready to Post - Pre-Configured Content</h3><p>Review your pre-approved content for each selected platform:</p>';
 
   // Add image section if post has an image
   if (contentData.postImage && contentData.postImage.trim() !== '') {
@@ -933,7 +1001,11 @@ function generatePreConfiguredPreview() {
           Post Image
         </h4>
         <div class="image-preview-container">
-          <img src="${convertGoogleDriveLink(contentData.postImage)}" alt="Post Image" class="post-image-preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" onload="console.log('✅ Image loaded successfully!')" onerror="handleImageError(this)">
+          <div class="image-loading-spinner" id="imageLoadingSpinner">
+            <div class="spinner"></div>
+            <p>Loading image...</p>
+          </div>
+          <img src="${convertImageLink(contentData.postImage)}" alt="Post Image" class="post-image-preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none;" onload="handleImageLoad(this)" onerror="handleImageError(this)">
         </div>
       </div>
     `;
@@ -1208,11 +1280,16 @@ function getPlatformContentColumn(platform) {
 // Show generate button when no platform content exists
 function showGenerateButton() {
   const previewHTML = `
-    <h3>🚀 Ready to Post - Content Generation Required</h3>
+    <h3>⚡ Content Generation Required</h3>
     <p>This post has been pre-approved but needs platform-specific content generation.</p>
     <div class="btn-group">
       <button id="generateSpecificContent" class="btn">
-        <span>✍️ Generate Platform-Specific Content</span>
+        <span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+            <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z" fill="currentColor"/>
+          </svg>
+          Generate Platform-Specific Content
+        </span>
       </button>
     </div>
   `;
@@ -1290,18 +1367,33 @@ async function generatePlatformSpecificContent() {
   }
 }
 
+// Handle image loading success
+function handleImageLoad(imgElement) {
+  console.log('✅ Image loaded successfully!');
+  // Hide loading spinner and show image
+  const container = imgElement.parentNode;
+  const spinner = container.querySelector('.image-loading-spinner');
+  if (spinner) {
+    spinner.style.display = 'none';
+  }
+  imgElement.style.display = 'block';
+}
+
 // Handle image loading errors
 function handleImageError(imgElement) {
   console.error('❌ Image failed to load');
-  const errorDiv = document.createElement('div');
-  errorDiv.style.cssText = 'padding: 20px; background: rgba(255,0,0,0.1); border: 1px solid #ff6b6b; border-radius: 8px; color: #d63031; text-align: center;';
-  errorDiv.innerHTML = '⚠️ Image could not be loaded<br><small>Check if the Google Drive file is publicly shared</small>';
-  imgElement.parentNode.replaceChild(errorDiv, imgElement);
+  const container = imgElement.parentNode;
+  const spinner = container.querySelector('.image-loading-spinner');
+  if (spinner) {
+    spinner.innerHTML = '<div style="color: #d63031; text-align: center;"><div>⚠️</div><div>Image could not be loaded</div><small>Check if the file is publicly accessible</small></div>';
+  }
+  imgElement.style.display = 'none';
 }
 
 // Make functions globally available
 window.toggleContentPreview = toggleContentPreview;
 window.closeContentModal = closeContentModal;
+window.handleImageLoad = handleImageLoad;
 window.handleImageError = handleImageError;
 
 // Final submit
