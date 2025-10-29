@@ -1,7 +1,16 @@
 // Constants
-const N8N_WORKFLOW_URL = "https://ansariujale.app.n8n.cloud/webhook-test/47ea1222-5f01-4089-a26e-4c46f17e3985";
-const N8N_UPDATE_WEBHOOK_URL = "https://ansariujale.app.n8n.cloud/webhook-test/fdd90d42-37bb-48e3-a7df-169574e28578";
-const N8N_GENERATE_WEBHOOK_URL= "https://ansariujale.app.n8n.cloud/webhook-test/aab70e42-31ee-4017-834c-00aa8b436bbc"
+
+//Webhook URL's For Test
+// const N8N_WORKFLOW_URL = "https://ansariujale.app.n8n.cloud/webhook-test/47ea1222-5f01-4089-a26e-4c46f17e3985";       // for test
+// const N8N_UPDATE_WEBHOOK_URL = "https://ansariujale.app.n8n.cloud/webhook-test/fdd90d42-37bb-48e3-a7df-169574e28578"; //for test
+const N8N_GENERATE_WEBHOOK_URL= "https://ansariujale.app.n8n.cloud/webhook-test/aab70e42-31ee-4017-834c-00aa8b436bbc" //for test
+
+//Webhook URL's For Production
+const N8N_WORKFLOW_URL = "https://ansariujale.app.n8n.cloud/webhook/47ea1222-5f01-4089-a26e-4c46f17e3985"; // for prod
+const N8N_UPDATE_WEBHOOK_URL = "https://ansariujale.app.n8n.cloud/webhook/fdd90d42-37bb-48e3-a7df-169574e28578"; //for prod
+// const N8N_GENERATE_WEBHOOK_URL= "https://ansariujale.app.n8n.cloud/webhook/aab70e42-31ee-4017-834c-00aa8b436bbc" //for prod
+
+
 const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ggy_qYLwzAc2f3iMvQ0gpuUZ8MCf5YsDGbydGaMYCneKXmGoAhtcCvBAPeHA_SljFd0pwKGd0lwq/pub?output=csv";
 
 // DOM Elements
@@ -1014,14 +1023,14 @@ function generatePreConfiguredPreview() {
   selectedPlatforms.forEach((platform, index) => {
     // Get platform-specific content from the selectedPost data (fresh from sheet)
     const columnName = getPlatformContentColumn(platform);
-    let platformContent = selectedPost[columnName] || contentData.content || 'Content not available';
+    let platformContent = selectedPost[columnName] || contentData[platform + 'Copy'] || contentData.content || 'Content not available';
 
     // Debug logging for each platform
     console.log(`Platform: ${platform}, Column: ${columnName}, Content:`, platformContent);
 
     // Remove any default placeholder text
     if (platformContent === 'Content will be generated based on your input.') {
-      platformContent = 'Content not available';
+      platformContent = 'Waiting for content';
     }
 
     const charCount = platformContent.length;
@@ -1076,8 +1085,13 @@ backToPage1.addEventListener('click', function(){
 nextToPreview.addEventListener('click', function() {
   if (configurationSubmitted) {
     showStep(3);
-    generatePreview();
+    // Show loading state first
+    previewLoading.style.display = 'block';
+    previewContent.style.display = 'none';
     clearMessage('step2Message');
+
+    // Use the same preview function as pre-configured posts for consistency
+    generatePreConfiguredPreview();
   }
 });
 
@@ -1133,15 +1147,26 @@ if (GeneratePlatformSpecificContent) {
             );
 
             if (currentPost) {
+                // Update selectedPost with fresh data from sheets
+                selectedPost = currentPost;
+
                 // Update content data with newly generated content
                 contentData = {
                     summary: currentPost.sourceSummary || contentData.summary,
                     headline: currentPost.sourceHeadline || contentData.headline,
-                    content: currentPost.twitterCopy || currentPost.linkedinCopy || currentPost.facebookCopy || contentData.content
+                    content: currentPost.twitterCopy || currentPost.linkedinCopy || currentPost.facebookCopy || contentData.content,
+                    // Store platform-specific content
+                    twitterCopy: currentPost.twitterCopy || '',
+                    linkedinCopy: currentPost.linkedinCopy || '',
+                    facebookCopy: currentPost.facebookCopy || '',
+                    instagramCopy: currentPost.instagramCopy || '',
+                    blogCopy: currentPost.blogCopy || '',
+                    // Store image data
+                    postImage: currentPost.postImage || contentData.postImage || ''
                 };
 
-                // Show the actual generated content
-                generatePreview();
+                // Show the actual generated content using the same function as pre-configured posts
+                generatePreConfiguredPreview();
                 showMessage('step3Message', '✅ Platform-specific content generated successfully!', 'success');
             } else {
                 throw new Error('Could not find updated post data after generation.');
@@ -1351,17 +1376,26 @@ async function generatePlatformSpecificContent() {
   );
 
   if (currentPost) {
+    // Update selectedPost with fresh data from sheets
+    selectedPost = currentPost;
+
     // Update content data with newly generated content
     contentData = {
       summary: currentPost.sourceSummary || contentData.summary,
       headline: currentPost.sourceHeadline || contentData.headline,
       content: currentPost.twitterCopy || currentPost.linkedinCopy || currentPost.facebookCopy || contentData.content,
+      // Store platform-specific content
       twitterCopy: currentPost.twitterCopy || '',
       linkedinCopy: currentPost.linkedinCopy || '',
       facebookCopy: currentPost.facebookCopy || '',
       instagramCopy: currentPost.instagramCopy || '',
-      blogCopy: currentPost.blogCopy || ''
+      blogCopy: currentPost.blogCopy || '',
+      // Store image data
+      postImage: currentPost.postImage || contentData.postImage || ''
     };
+
+    // Show the generated content using the same function as pre-configured posts
+    generatePreConfiguredPreview();
   } else {
     throw new Error('Could not find updated post data after generation.');
   }
@@ -1377,6 +1411,12 @@ function handleImageLoad(imgElement) {
     spinner.style.display = 'none';
   }
   imgElement.style.display = 'block';
+
+  // Add click event to expand image
+  imgElement.style.cursor = 'zoom-in';
+  imgElement.addEventListener('click', function() {
+    openImageModal(imgElement.src, imgElement.alt);
+  });
 }
 
 // Handle image loading errors
@@ -1390,11 +1430,57 @@ function handleImageError(imgElement) {
   imgElement.style.display = 'none';
 }
 
+// Open image modal for expanded view
+function openImageModal(imageSrc, altText) {
+  const modal = document.createElement('div');
+  modal.className = 'image-modal-overlay';
+  modal.innerHTML = `
+    <div class="image-modal">
+      <button class="image-modal-close" onclick="closeImageModal()">×</button>
+      <img src="${imageSrc}" alt="${altText}" onload="this.style.display='block'">
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Add fade-in animation
+  setTimeout(() => {
+    modal.classList.add('active');
+  }, 10);
+
+  // Close modal when clicking overlay
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeImageModal();
+    }
+  });
+
+  // Close modal on escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeImageModal();
+    }
+  });
+}
+
+// Close image modal
+function closeImageModal() {
+  const modal = document.querySelector('.image-modal-overlay');
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      modal.remove();
+    }, 300);
+  }
+}
+
 // Make functions globally available
 window.toggleContentPreview = toggleContentPreview;
 window.closeContentModal = closeContentModal;
 window.handleImageLoad = handleImageLoad;
 window.handleImageError = handleImageError;
+window.openImageModal = openImageModal;
+window.closeImageModal = closeImageModal;
 
 // Final submit
 finalSubmit.addEventListener('click', async function() {
