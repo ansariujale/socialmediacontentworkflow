@@ -40,6 +40,7 @@ let selectedPlatforms = [];
 let pendingPosts = [];
 let selectedPost = null;
 let configurationSubmitted = false;
+let isDarkMode = false;
 
 // Home button functionality
 const homeButton = document.getElementById('homeButton');
@@ -56,6 +57,48 @@ if (homeButton) {
     selectedPost = null;
     configurationSubmitted = false;
   });
+}
+
+// Dark mode toggle functionality
+const darkModeToggle = document.getElementById('darkModeToggle');
+if (darkModeToggle) {
+  // Load saved dark mode preference
+  const savedDarkMode = localStorage.getItem('darkMode');
+  if (savedDarkMode === 'true') {
+    enableDarkMode();
+  }
+
+  darkModeToggle.addEventListener('click', function() {
+    if (isDarkMode) {
+      disableDarkMode();
+    } else {
+      enableDarkMode();
+    }
+  });
+}
+
+function enableDarkMode() {
+  document.body.classList.add('dark-mode');
+  isDarkMode = true;
+  localStorage.setItem('darkMode', 'true');
+
+  // Update toggle button icons
+  const sunIcon = darkModeToggle.querySelector('.sun-icon');
+  const moonIcon = darkModeToggle.querySelector('.moon-icon');
+  if (sunIcon) sunIcon.style.display = 'none';
+  if (moonIcon) moonIcon.style.display = 'block';
+}
+
+function disableDarkMode() {
+  document.body.classList.remove('dark-mode');
+  isDarkMode = false;
+  localStorage.setItem('darkMode', 'false');
+
+  // Update toggle button icons
+  const sunIcon = darkModeToggle.querySelector('.sun-icon');
+  const moonIcon = darkModeToggle.querySelector('.moon-icon');
+  if (sunIcon) sunIcon.style.display = 'block';
+  if (moonIcon) moonIcon.style.display = 'none';
 }
 
 
@@ -952,6 +995,12 @@ function loadPreConfiguredPost(post) {
     facebookCopy: post.facebookCopy || '',
     instagramCopy: post.instagramCopy || '',
     blogCopy: post.blogCopy || '',
+    // Store channel-specific image data
+    twitterImage: post.twitterImageCopy || '',
+    linkedinImage: post.linkedinImageCopy || '',
+    facebookImage: post.facebookImageCopy || '',
+    instagramImage: post.instagramImageCopy || '',
+    blogImage: post.blogImageCopy || '',
     // Store image data - try different possible column names
     postImage: post.postImage || '',
   };
@@ -999,34 +1048,18 @@ function generatePreConfiguredPreview() {
   const includeImage = document.getElementById('includeImage')?.checked || false;
   let previewHTML = '<h3>✅ Ready to Post - Pre-Configured Content</h3><p>Review your pre-approved content for each selected platform:</p>';
 
-  // Add image section if post has an image
-  if (contentData.postImage && contentData.postImage.trim() !== '') {
-    previewHTML += `
-      <div class="image-preview-section">
-        <h4>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px; vertical-align: middle;">
-            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="#2196F3"/>
-          </svg>
-          Post Image
-        </h4>
-        <div class="image-preview-container">
-          <div class="image-loading-spinner" id="imageLoadingSpinner">
-            <div class="spinner"></div>
-            <p>Loading image...</p>
-          </div>
-          <img src="${convertImageLink(contentData.postImage)}" alt="Post Image" class="post-image-preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none;" onload="handleImageLoad(this)" onerror="handleImageError(this)">
-        </div>
-      </div>
-    `;
-  }
-
   selectedPlatforms.forEach((platform, index) => {
     // Get platform-specific content from the selectedPost data (fresh from sheet)
     const columnName = getPlatformContentColumn(platform);
     let platformContent = selectedPost[columnName] || contentData[platform + 'Copy'] || contentData.content || 'Content not available';
 
+    // Get platform-specific image from contentData
+    const imageColumnName = getPlatformImageColumn(platform);
+    const platformImage = contentData[imageColumnName] || '';
+
     // Debug logging for each platform
     console.log(`Platform: ${platform}, Column: ${columnName}, Content:`, platformContent);
+    console.log(`Platform: ${platform}, Image Column: ${imageColumnName}, Image:`, platformImage);
 
     // Remove any default placeholder text
     if (platformContent === 'Content will be generated based on your input.') {
@@ -1041,6 +1074,18 @@ function generatePreConfiguredPreview() {
       <div class="content-preview-card" data-platform="${platform}" data-expanded="${isExpanded}">
         <div class="content-preview-header" onclick="toggleContentPreview(${index})">
           <h4>${getPlatformIcon(platform)} ${platform.charAt(0).toUpperCase() + platform.slice(1)}</h4>
+          <div class="header-image-preview">
+            ${platformImage && platformImage.trim() !== '' ? `
+              <div class="image-loading-spinner-small" id="headerImageLoadingSpinner-${platform}">
+                <div class="spinner-small"></div>
+              </div>
+              <img src="${convertImageLink(platformImage)}" alt="${platform.charAt(0).toUpperCase() + platform.slice(1)} Image" class="header-image-preview-img" style="display: none;" onload="handleHeaderImageLoad(this)" onerror="handleHeaderImageError(this)" onclick="openImageModal(this.src, this.alt); event.stopPropagation();">
+            ` : `
+              <div class="header-image-placeholder">
+                <span class="placeholder-icon-small">📷</span>
+              </div>
+            `}
+          </div>
           <span class="expand-icon">${isExpanded ? '🔽' : '▶️'}</span>
         </div>
         <div class="content-preview-body">
@@ -1099,6 +1144,14 @@ nextToPreview.addEventListener('click', function() {
 backToPage2.addEventListener('click', function() {
   showStep(2);
   clearMessage('step3Message');
+
+  // If this is a "Need Approval" post, display its content in step 2
+  if (selectedPost && selectedPost.Status && selectedPost.Status.trim() === 'Need Approval') {
+    displayResults({
+      summary: selectedPost.sourceSummary || 'Summary not available',
+      headline: selectedPost.sourceHeadline || 'Headline not available'
+    });
+  }
 });
 
 if (GeneratePlatformSpecificContent) {
@@ -1237,6 +1290,10 @@ function toggleContentPreview(cardIndex) {
     platformContent = 'Content not available';
   }
 
+  // Get platform-specific image for the modal
+  const imageColumnName = getPlatformImageColumn(platform);
+  const platformImage = contentData[imageColumnName] || '';
+
   // Create modal overlay
   const modal = document.createElement('div');
   modal.className = 'content-modal-overlay';
@@ -1247,6 +1304,20 @@ function toggleContentPreview(cardIndex) {
         <button class="modal-close-btn" onclick="closeContentModal()">✕</button>
       </div>
       <div class="content-modal-body">
+        ${platformImage && platformImage.trim() !== '' ? `
+          <div class="modal-image-preview">
+            <div class="image-loading-spinner" id="modalImageLoadingSpinner-${platform}">
+              <div class="spinner"></div>
+              <p>Loading image...</p>
+            </div>
+            <img src="${convertImageLink(platformImage)}" alt="${platform.charAt(0).toUpperCase() + platform.slice(1)} Image" class="modal-post-image" style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; cursor: zoom-in;" onload="handleModalImageLoad(this)" onerror="handleModalImageError(this)" onclick="openImageModal(this.src, this.alt)">
+          </div>
+        ` : `
+          <div class="modal-image-placeholder">
+            <div class="placeholder-icon">📷</div>
+            <div class="placeholder-text">Image not available</div>
+          </div>
+        `}
         <div class="content-text-full">
           ${platformContent}
         </div>
@@ -1300,6 +1371,18 @@ function getPlatformContentColumn(platform) {
     'blog': 'blogCopy'
   };
   return columnMap[platform.toLowerCase()] || 'twitterCopy';
+}
+
+// Get platform image column name
+function getPlatformImageColumn(platform) {
+  const columnMap = {
+    'twitter': 'twitterImage',
+    'linkedin': 'linkedinImage',
+    'facebook': 'facebookImage',
+    'instagram': 'instagramImage',
+    'blog': 'blogImage'
+  };
+  return columnMap[platform.toLowerCase()] || 'twitterImage';
 }
 
 // Show generate button when no platform content exists
@@ -1419,6 +1502,52 @@ function handleImageLoad(imgElement) {
   });
 }
 
+// Handle header image loading success
+function handleHeaderImageLoad(imgElement) {
+  console.log('✅ Header image loaded successfully!');
+  // Hide loading spinner and show image
+  const container = imgElement.parentNode;
+  const spinner = container.querySelector('.image-loading-spinner-small');
+  if (spinner) {
+    spinner.style.display = 'none';
+  }
+  imgElement.style.display = 'block';
+}
+
+// Handle header image loading errors
+function handleHeaderImageError(imgElement) {
+  console.error('❌ Header image failed to load');
+  const container = imgElement.parentNode;
+  const spinner = container.querySelector('.image-loading-spinner-small');
+  if (spinner) {
+    spinner.innerHTML = '<div style="color: #d63031; font-size: 12px; text-align: center;">⚠️</div>';
+  }
+  imgElement.style.display = 'none';
+}
+
+// Handle modal image loading success
+function handleModalImageLoad(imgElement) {
+  console.log('✅ Modal image loaded successfully!');
+  // Hide loading spinner and show image
+  const container = imgElement.parentNode;
+  const spinner = container.querySelector('.image-loading-spinner');
+  if (spinner) {
+    spinner.style.display = 'none';
+  }
+  imgElement.style.display = 'block';
+}
+
+// Handle modal image loading errors
+function handleModalImageError(imgElement) {
+  console.error('❌ Modal image failed to load');
+  const container = imgElement.parentNode;
+  const spinner = container.querySelector('.image-loading-spinner');
+  if (spinner) {
+    spinner.innerHTML = '<div style="color: #d63031; text-align: center;"><div>⚠️</div><div>Image could not be loaded</div><small>Check if the file is publicly accessible</small></div>';
+  }
+  imgElement.style.display = 'none';
+}
+
 // Handle image loading errors
 function handleImageError(imgElement) {
   console.error('❌ Image failed to load');
@@ -1479,6 +1608,10 @@ window.toggleContentPreview = toggleContentPreview;
 window.closeContentModal = closeContentModal;
 window.handleImageLoad = handleImageLoad;
 window.handleImageError = handleImageError;
+window.handleHeaderImageLoad = handleHeaderImageLoad;
+window.handleHeaderImageError = handleHeaderImageError;
+window.handleModalImageLoad = handleModalImageLoad;
+window.handleModalImageError = handleModalImageError;
 window.openImageModal = openImageModal;
 window.closeImageModal = closeImageModal;
 
