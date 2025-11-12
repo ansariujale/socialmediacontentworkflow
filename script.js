@@ -289,9 +289,11 @@ async function updateSheetWithSelections(platforms, includeImage) {
 
     const socialChannelValue = mappedPlatforms.join(','); // Comma-separated string like "Twitter,Linkedin"
     const needsImageValue = includeImage ? 'yes' : 'no';
+    const postId = selectedPost.ID ;
 
     // Send data to the update webhook
     const updateData = {
+      id: postId,
       headline: selectedPost.sourceHeadline,
       summary: selectedPost.sourceSummary,
       socialChannels: socialChannelValue,
@@ -309,6 +311,7 @@ async function updateSheetWithSelections(platforms, includeImage) {
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
+      console.log("postid sent: ",id)
     }
   } catch (error) {
     console.warn('Error sending update to webhook:', error);
@@ -404,7 +407,7 @@ async function pollForDataStorage() {
         // Get the latest row (newest addition)
         const newRow = latestData[currentRowCount - 1];
         console.log(`📋 Newest row:`, {
-          input: newRow.input,
+          input: newRow["Keyword Input"],
           headline: newRow.sourceHeadline,
           summary: newRow.sourceSummary
         });
@@ -856,9 +859,11 @@ initialForm.addEventListener('submit', async function(e) {
     if (storedData) {
       // Set selectedPost to the stored data row
       selectedPost = storedData;
+      postID=storeDataInSheets.ID;
 
       // Use data directly from the dedicated columns
       contentData = {
+        postid:postID,
         summary: storedData.sourceSummary || 'Summary not available',
         headline: storedData.sourceHeadline || 'Headline not available',
         content: storedData.twitterCopy || 'Content will be generated based on your input.',
@@ -866,7 +871,7 @@ initialForm.addEventListener('submit', async function(e) {
         description: description,
         postStyle: postStyle
       };
-
+      console.log(postID)
       console.log('Final content data to display:', contentData);
 
       // Move to step 2 and display results
@@ -1286,7 +1291,7 @@ function displayPendingPosts(posts) {
       <div class="pending-post-item" data-index="${index}">
         <div class="post-header">
           <h4>${post.sourceHeadline || 'No headline available'}</h4>
-          <span class="status-badge">${post.Status || 'Unknown Status'}</span>
+          <span class="status-badge" data-value="${post.Status || 'Unknown Status'}">${post.Status || 'Unknown Status'}</span>
         </div>
         <div class="post-content">
           <p><strong>Input:</strong> ${post['Keyword Input'].toUpperCase() || 'N/A'}</p>
@@ -1380,6 +1385,8 @@ function generatePreview() {
     const truncatedContent = platformContent.length > 150 ? platformContent.substring(0, 150) + '...' : platformContent;
     const isExpanded = false; // Default collapsed state
 
+    console.log('Body clicked!', cardIndex);
+
     previewHTML += `
       <div class="content-preview-card" data-platform="${platform}" data-expanded="${isExpanded}" onclick="toggleContentPreview(${index})">
         <div class="content-preview-header">
@@ -1390,7 +1397,8 @@ function generatePreview() {
             </svg>
           </span>
         </div>
-        <div class="content-preview-body">
+        
+        <div class="content-preview-body" onclick="toggleContentPreview(${index})" style="cursor: pointer;">
           <div class="content-text ${isExpanded ? 'expanded' : 'collapsed'}">
             <strong>Content:</strong> <span class="content-display">${isExpanded ? platformContent : truncatedContent}</span>
           </div>
@@ -1424,7 +1432,7 @@ function generateSkeletonPreview() {
             </svg>
           </span>
         </div>
-        <div class="content-preview-body">
+        <div class="content-preview-body" onclick="toggleContentPreview(${index})" style="cursor: pointer;">
           <div class="content-text collapsed">
             <strong>Content:</strong>
             <div class="skeleton skeleton-text large"></div>
@@ -1617,7 +1625,6 @@ function selectPendingPost(post) {
 
       console.log('Pre-selected platforms for regular post:', socialChannels);
     }
-
     showStep(2);
     displayResults(contentData);
   }
@@ -1789,7 +1796,7 @@ function generatePreConfiguredPreview() {
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" fill="currentColor"/></svg>'}
           </span>
         </div>
-        <div class="content-preview-body">
+        <div class="content-preview-body" onclick="toggleContentPreview(${index})" style="cursor: pointer;">
           <div class="content-text ${isExpanded ? 'expanded' : 'collapsed'}">
             <strong>Content:</strong> <span class="content-display">${isExpanded ? platformContent : truncatedContent}</span>
           </div>
@@ -1877,6 +1884,7 @@ if (GeneratePlatformSpecificContent) {
             }
 
             const generateData = {
+                postID:selectedPost.ID,
                 headline: selectedPost.sourceHeadline,
                 action: 'generate_specific'
             };
@@ -1974,7 +1982,7 @@ async function waitForContentGeneration() {
     console.warn('Content generation check timed out, proceeding with available data');
 }
 
-// Toggle content preview expansion with modal popup
+// Toggle content preview expansion with modal popup (header click)
 function toggleContentPreview(cardIndex) {
   const cards = document.querySelectorAll('.content-preview-card');
   const card = cards[cardIndex];
