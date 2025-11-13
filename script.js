@@ -1382,7 +1382,7 @@ function generatePreview() {
   selectedPlatforms.forEach((platform, index) => {
     const platformContent = generatePlatformContent(platform, contentData);
     const charCount = platformContent.length;
-    const truncatedContent = platformContent.length > 150 ? platformContent.substring(0, 150) + '...' : platformContent;
+    const truncatedContent = platformContent.length > 100 ? platformContent.substring(0, 100) + '...' : platformContent;
     const isExpanded = false; // Default collapsed state
 
     console.log('Body clicked!', cardIndex);
