@@ -6,9 +6,9 @@
 // const N8N_GENERATE_WEBHOOK_URL= "https://janhavipal.app.n8n.cloud/webhook-test/aab70e42-31ee-4017-834c-00aa8b436bbc" //for test
 
 //Webhook URL's For Production
-const N8N_WORKFLOW_URL = "https://janhavipal.app.n8n.cloud/webhook/47ea1222-5f01-4089-a26e-4c46f17e3985"; // for prod
-const N8N_UPDATE_WEBHOOK_URL = "https://janhavipal.app.n8n.cloud/webhook/fdd90d42-37bb-48e3-a7df-169574e28578"; //for prod
-const N8N_GENERATE_WEBHOOK_URL= "https://janhavipal.app.n8n.cloud/webhook/aab70e42-31ee-4017-834c-00aa8b436bbc" //for prod
+const N8N_WORKFLOW_URL = "https://mcmflow.app.n8n.cloud/webhook/47ea1222-5f01-4089-a26e-4c46f17e3985"; // for prod
+const N8N_UPDATE_WEBHOOK_URL = "https://mcmflow.app.n8n.cloud/webhook/0ee3f834-dafd-44ae-abed-9d941b92831a"; //for prod
+const N8N_GENERATE_WEBHOOK_URL= "https://mcmflow.app.n8n.cloud/webhook/aab70e42-31ee-4017-834c-00aa8b436bbc" //for prod
 
 const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0ggy_qYLwzAc2f3iMvQ0gpuUZ8MCf5YsDGbydGaMYCneKXmGoAhtcCvBAPeHA_SljFd0pwKGd0lwq/pub?output=csv";
 

@@ -1122,7 +1122,7 @@ body.dark-mode .content-text {
   margin: 8px 0;
   line-height: 1;
   color: rgba(0,0,0,0.75);
-  font-size: 14px;
+  font-size: 20px;
 }
 
 body.dark-mode .content-meta p {
@@ -1274,13 +1274,13 @@ body.dark-mode .post-header {
     0 0 0 1px rgba(255, 255, 255, 0.05); */
 }
 
-body.dark-mode .post-header:hover {
+/* body.dark-mode .post-header:hover {
   /* box-shadow:
     0 12px 40px rgba(102, 126, 234, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 0 0 1px rgba(102, 126, 234, 0.2);
-  border-color: rgba(102, 126, 234, 0.4); */
-}
+  border-color: rgba(102, 126, 234, 0.4); 
+  */
 
 .post-header h4 {
   margin: 0;
@@ -2747,9 +2747,9 @@ body.dark-mode .pending-post-item:hover {
 }
 
 /* Filtered out state for posts */
-.pending-post-item[style*="display: none"] {
+/* .pending-post-item[style*="display: none"] { */
   /* Fallback for browsers that don't support our filtering */
-}
+/* } */
 
 /* Smooth grid transitions */
 .pending-posts-grid.filtering {
@@ -3384,13 +3384,12 @@ body.dark-mode .pending-post-item:hover {
 }
 
 /* iOS Safari Specific Fixes */
-@supports (-webkit-touch-callout: none) {
+/* @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific styles */
-  .search-input, input[type="text"], textarea, select {
-    font-size: 16px !important; /* Prevent zoom on focus */
-    -webkit-appearance: none;
-    border-radius: 10px;
-  }
+  /* .search-input, input[type="text"], textarea, select { */
+    /* font-size: 16px !important; Prevent zoom on focus */
+    /* -webkit-appearance: none; */
+    /* border-radius: 10px;} */
 
   .search-input {
     border-radius: 50px;
@@ -3403,23 +3402,23 @@ body.dark-mode .pending-post-item:hover {
 
   /* iOS Safari button styling */
   .btn, .btn-small {
-    -webkit-appearance: none;
+    /* -webkit-appearance: none; */
     border: none;
   }
-}
+/* } */
 
 /* Android Chrome Specific Fixes */
 @supports (-webkit-appearance: none) and (not (-webkit-touch-callout: none)) {
   /* Android Chrome specific styles */
-  .search-input, input[type="text"], textarea, select {
-    -webkit-appearance: none;
+  /* .search-input, input[type="text"], textarea, select { */
+    /* -webkit-appearance: none; */
   }
 
   /* Fix for Android Chrome scrolling */
   .content-modal-body {
     overscroll-behavior: contain;
   }
-}
+/* } */
 
 /* Touch Active States */
 .touch-active {
